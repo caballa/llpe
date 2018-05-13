@@ -33,8 +33,8 @@ char LLPEAnalysisPass::ID = 0;
 static cl::opt<std::string> RootFunctionName("llpe-root", cl::init("main"));
 
 static RegisterPass<LLPEAnalysisPass> X("llpe-analysis", "LLPE Analysis",
-						 false /* Only looks at CFG */,
-						 true /* Analysis Pass */);
+					false /* Only looks at CFG */,
+					true /* Analysis Pass */);
 
 // Constructors for the main analysis container classes:
 
@@ -445,7 +445,7 @@ Type* llvm::GInt16;
 Type* llvm::GInt32;
 Type* llvm::GInt64;
 
-//char llvm::ihp_workdir[] = "/tmp/ihp_XXXXXX";
+char llvm::ihp_workdir[] = "/tmp/ihp_XXXXXX";
 
 namespace llvm {
   size_t getStringPathConditionCount();
@@ -454,7 +454,6 @@ namespace llvm {
 // Top-level entry point:
 
 bool LLPEAnalysisPass::runOnModule(Module& M) {
-
   // XXX: JN commented because it's unused.
   // if(!mkdtemp(ihp_workdir)) {
   //   errs() << "Failed to create " << ihp_workdir << "\n";
@@ -463,8 +462,10 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
 
   TD = &M.getDataLayout();
   GlobalTD = TD;
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-  GlobalAA = AA;
+  // FIXME: This currently crashes.
+  // A possible reason is that AAResultsWrapperPass is a Function Pass.
+  //GlobalAA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  GlobalAA = nullptr;
   GlobalTLI = &getAnalysis<TargetLibraryInfoWrapperPass> ().getTLI();
   GlobalIHP = this;
   GInt8Ptr = Type::getInt8PtrTy(M.getContext());
@@ -476,7 +477,6 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
   persistPrinter = getPersistPrinter(&M);
 
   initMRInfo(&M);
-  
   for(Module::iterator MI = M.begin(), ME = M.end(); MI != ME; MI++) {
 
     if(!MI->isDeclaration()) {
@@ -486,13 +486,12 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
     }
 
   }
-
+  
   Function* FoundF = M.getFunction(RootFunctionName);
   if((!FoundF) || FoundF->isDeclaration()) {
-
-    errs() << "Function " << RootFunctionName << " not found or not defined in this module\n";
+    errs() << "Function " << RootFunctionName
+	   << " not found or not defined in this module\n";
     return false;
-
   }
 
   Function& F = *FoundF;
@@ -517,21 +516,19 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
 
   InlineAttempt* IA = new InlineAttempt(this, F, 0, 0);
   if(targetCallStack.size()) {
-
     IA->setTargetCall(targetCallStack[0], 0);
-
   }
 
   // Note ignored blocks and path conditions:
   parseArgsPostCreation(IA);
 
-  // Now that all globals have grabbed heap slots, insert extra locations per special function.
+  // Now that all globals have grabbed heap slots, insert extra
+  // locations per special function.
   createSpecialLocations();
 
   argStores = new ArgStore[F.arg_size()];
   
   for(unsigned i = 0; i < F.arg_size(); ++i) {
-
     if(argConstants[i])
       setParam(IA, i, argConstants[i]);
     else {
@@ -568,19 +565,17 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
   errs() << "\n";
   
   if(IHPSaveDOTFiles) {
-
     // Function sharing is now decided, and hence the graph structure, so create
     // graph tags for the GUI.
     rootTag = RootIA->createTag(0);
-
   }
-    
   return false;
 
 }
 
 void LLPEAnalysisPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AAResultsWrapperPass>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();  
   AU.addRequired<LoopInfoWrapperPass>();  
   const PassInfo* BAAInfo = lookupPassInfo(StringRef("basicaa"));
   if(!BAAInfo) {

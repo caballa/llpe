@@ -21,7 +21,7 @@ using namespace llvm;
 
 // For communication with wxWidgets, since there doesn't seem to be any easy way
 // of passing a parameter to WxApp's constructor.
-static LLPEAnalysisPass* IHP;
+//static LLPEAnalysisPass* IHP;
 //static bool IntegratorCancelled = false;
 
 static cl::opt<bool> AcceptAllInt("integrator-accept-all", cl::init(false));
@@ -39,29 +39,23 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   };
-
 }
 
-char LLPEPass::ID = 0;
-static RegisterPass<LLPEPass> X("llpe", "LLPE Partial Evaluation",
-				      false /* Only looks at CFG */,
-				      false /* Analysis Pass */);
-
-// Implement a GUI for leafing through integration results
-
-
 bool LLPEPass::runOnModule(Module& M) {
-
-  IHP = &getAnalysis<LLPEAnalysisPass>();
+  LLPEAnalysisPass* IHP = &getAnalysis<LLPEAnalysisPass>();
   IHP->commit();
-
   return false;
 
 }
 
 void LLPEPass::getAnalysisUsage(AnalysisUsage& AU) const {
-
-  IHPSaveDOTFiles = !AcceptAllInt;
+  //IHPSaveDOTFiles = !AcceptAllInt;
   AU.addRequired<LLPEAnalysisPass>();
 
 }
+
+char LLPEPass::ID = 0;
+static RegisterPass<LLPEPass> X("llpe", "LLPE Partial Evaluation",
+				false /* Only looks at CFG */,
+				false /* Analysis Pass */);
+
