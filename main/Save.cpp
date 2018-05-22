@@ -2756,18 +2756,17 @@ void IntegrationAttempt::commitLoopInstructions(const ShadowLoopInvar* ScopeL, u
 
 }
 
-// Apply the same debug tag to all of 'blocks'. Used to provide simple insight in GDB about the provenance
-// of specialised code that crashes.
-static void applyLocToBlocks(const DebugLoc& loc, const std::vector<BasicBlock*>& blocks) {
+// // Apply the same debug tag to all of 'blocks'. Used to provide simple insight in GDB about the provenance
+// // of specialised code that crashes.
+// static void applyLocToBlocks(const DebugLoc& loc, const std::vector<BasicBlock*>& blocks) {
+//     for(std::vector<BasicBlock*>::const_iterator it = blocks.begin(), itend = blocks.end(); it != itend; ++it) {
+// 	for(BasicBlock::iterator IIt = (*it)->begin(), IEnd = (*it)->end(); IIt != IEnd; ++IIt) {
+// 	  if(!(IIt->getDebugLoc()))
+// 	    IIt->setDebugLoc(loc);
+// 	}
+//     }
 
-    for(std::vector<BasicBlock*>::const_iterator it = blocks.begin(), itend = blocks.end(); it != itend; ++it) {
-	for(BasicBlock::iterator IIt = (*it)->begin(), IEnd = (*it)->end(); IIt != IEnd; ++IIt) {
-	  if(!(IIt->getDebugLoc()))
-	    IIt->setDebugLoc(loc);
-	}
-    }
-
-}
+// }
 
 // Commit all arguments and instructions in this function context, using synthetic constants / pointers
 // instead of the original instructions wherever possible. This recurses into loop contexts and child calls
@@ -3296,7 +3295,8 @@ void InlineAttempt::finaliseAndCommit(bool inLoopAnalyser) {
     runDIE();
 
     // Save a DOT representation if need be, for the GUI to use.
-    saveDOT();
+    // JN: no GUI after porting to llvm 5.0
+    //saveDOT();
 
     // Finally, do it!
     commitCFG();
@@ -3308,7 +3308,8 @@ void InlineAttempt::finaliseAndCommit(bool inLoopAnalyser) {
   else {
 
     // Save a DOT representation if need be, for the GUI to use.
-    saveDOT();
+    // JN: no GUI after porting to llvm 5.0
+    //saveDOT();
 
     // Allocations and FD creations in this scope should be marked
     // committed without canonical value.
@@ -3389,9 +3390,10 @@ void LLPEAnalysisPass::commit() {
     postCommitStats();
     
     std::error_code error;
-    raw_fd_ostream RFO(statsFile.c_str(), error, sys::fs::F_None);
+    raw_fd_ostream RFO(statsFile.c_str(), error, sys::fs::F_Text);
     if(error)
-      errs() << "Failed to open " << statsFile << ": " << error.message() << "\n";
+      errs() << "Failed to open " << statsFile << ": " << error.message()
+	     <<  " at " << __FILE__ << "::" << __LINE__ << "\n";
     else
       stats.print(RFO);
   }
