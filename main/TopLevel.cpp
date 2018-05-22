@@ -486,7 +486,7 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
     }
 
   }
-  
+
   Function* FoundF = M.getFunction(RootFunctionName);
   if((!FoundF) || FoundF->isDeclaration()) {
     errs() << "Function " << RootFunctionName
@@ -502,13 +502,20 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
   //   Realloc->setDoesNotAlias(0);
   // }
 
-  DEBUG(dbgs() << "Considering inlining starting at " << F.getName() << ":\n");
+  //DEBUG(dbgs() << "Considering inlining starting at " << F.getName() << ":\n");
 
+  errs () << "Considering inlining starting at " << F.getName() << "\n";
+  
   std::vector<Constant*> argConstants(F.arg_size(), 0);
   uint32_t argvIdx = 0xffffffff;
   parseArgs(F, argConstants, argvIdx);
 
-  populateGVCaches(&M);
+  // JN: this builds a map from GlobalValue to its text representation
+  // It's really expensive. I think we can skip it because it's only
+  // used by the DOT output code.
+  // errs () << "Populating cache for global values ...";
+  // populateGVCaches(&M);
+  // errs () << "done\n";
   initSpecialFunctionsMap(M);
   // Last parameter: reserve extra GV slots for the constants that path condition parsing will produce.
   initShadowGlobals(M, getStringPathConditionCount());
@@ -525,7 +532,7 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
   // Now that all globals have grabbed heap slots, insert extra
   // locations per special function.
   createSpecialLocations();
-
+  
   argStores = new ArgStore[F.arg_size()];
   
   for(unsigned i = 0; i < F.arg_size(); ++i) {
@@ -550,7 +557,6 @@ bool LLPEAnalysisPass::runOnModule(Module& M) {
     heap.back().isCommitted = false;
     heap.back().allocValue = ShadowValue(&IA->argShadows[argvIdx]);
     heap.back().allocType = IA->argShadows[argvIdx].getType();
-
   }
 
   createPointerArguments(IA);
