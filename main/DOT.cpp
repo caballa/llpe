@@ -781,7 +781,8 @@ void IntegrationAttempt::saveDOT2(bool brief) {
 
   if(error) {
 
-    errs() << "Failed to open " << filename << ": " << error.message() << "\n";
+    errs() << "Failed to open " << filename << ": " << error.message()
+	   << " at " << __FILE__ << "::" << __LINE__ << "\n";
     return;
 
   }
@@ -875,7 +876,8 @@ void IntegrationAttempt::describeTreeAsDOT(std::string path) {
 
   if(error) {
 
-    errs() << "Failed to open " << graphPath << ": " << error.message() << "\n";
+    errs() << "Failed to open " << graphPath << ": " << error.message()
+	   <<  " at " << __FILE__ << "::" << __LINE__  << "\n";
     return;
 
   }
