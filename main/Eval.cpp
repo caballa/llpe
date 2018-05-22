@@ -730,12 +730,13 @@ static bool heapPointerAlreadyTested(ShadowValue& V, ShadowInstruction* TestI) {
   W.walk();
 
   AD.allocTested = W.Result;
+  // JN: too verbose ...
+  #if 0
   if(W.Result == AllocEscaped) {
-
-     errs() << "Heap allocation " << itcache(V) << " does not appear to be locally tested and so all null comparisons will be checked\n";
-
+    errs() << "Heap allocation " << itcache(V)
+	   << " does not appear to be locally tested and so all null comparisons will be checked\n";
   }
-
+  #endif
   return false;
 
 }
@@ -1660,23 +1661,20 @@ void IntegrationAttempt::tryEvaluateResult(ShadowInstruction* SI,
   
 }
 
-static bool containsPtrAsInt(ConstantExpr* CE) {
+// static bool containsPtrAsInt(ConstantExpr* CE) {
+//   if(CE->getOpcode() == Instruction::PtrToInt)
+//     return true;
 
-  if(CE->getOpcode() == Instruction::PtrToInt)
-    return true;
+//   for(unsigned i = 0; i < CE->getNumOperands(); ++i) {
 
-  for(unsigned i = 0; i < CE->getNumOperands(); ++i) {
+//     if(ConstantExpr* SubCE = dyn_cast<ConstantExpr>(CE->getOperand(i))) {      
+//       if(containsPtrAsInt(SubCE))
+// 	return true;
+//     }
 
-    if(ConstantExpr* SubCE = dyn_cast<ConstantExpr>(CE->getOperand(i))) {      
-      if(containsPtrAsInt(SubCE))
-	return true;
-    }
-
-  }
-
-  return false;
-
-}
+//   }
+//   return false;
+// }
 
 // All Ops are known not to have multi values. Extract each Op in turn until we've discovered all SI's operands,
 // then call tryEvaluateResult.
